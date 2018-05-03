@@ -70,8 +70,8 @@ public class DiagnosticsRunner {
 		System.out.println("* top output (this should take a bit)");
 		commandLineFetcher.fetch("top -H -n3 -b", "top.txt");
 		
-		if (!cmd.hasOption("noVarLog")) {
-			String varLogDestination = outputDir + File.separator + "syslog";
+		if (cmd.hasOption("getVarLog")) {
+			String varLogDestination = outputDir + File.separator + "var_log";
 			System.out.println("* Copying logs from /var/log to " + varLogDestination);
 		    try {
 				FileUtils.copyDirectory(new File("/var/log"), new File(varLogDestination));
@@ -257,7 +257,7 @@ public class DiagnosticsRunner {
 	private static CommandLine getCommandLine(String[] args) {
 		options.addOption("help", "Print this message");
 		options.addOption("noSolrLogs", "Skip fetching Solr logs");
-		options.addOption("noVarLog", "Skip fetching logs from /var/log");
+		options.addOption("getVarLog", "Fetch all logs from /var/log (there might be a lot of data)");
 		options.addOption(Option.builder("outputdir")
                 .desc( "Where to write the diagnostics files. A timestamp-based directory will be created there. Defaults to /tmp" )
                 .hasArg(true)
