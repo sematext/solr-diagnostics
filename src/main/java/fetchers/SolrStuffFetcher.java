@@ -55,7 +55,7 @@ public class SolrStuffFetcher {
 	
 	public void fetchGCLogs() {
 		String outputDir = writer.getOutputDir();
-		String solrLogsOutputDir = outputDir + File.separator + "gclogs";
+		String solrLogsOutputDir = outputDir + File.separator + "logs";
 		
 		Path solrLogsOutputDirHandle = Paths.get(solrLogsOutputDir);
 		try {
