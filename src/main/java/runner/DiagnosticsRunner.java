@@ -108,23 +108,22 @@ public class DiagnosticsRunner {
 
 		HTTPFetcher httpFetcher = new HTTPFetcher(solrAddress);
 		
+		File configDirHandle = new File(writer.getOutputDir() + File.separator + "configs");
+		if (! configDirHandle.mkdir()) {
+			System.out.println("Can't create config output dir " + configDirHandle.getAbsolutePath());
+		}
+		String configLocalLocation = configDirHandle.getAbsolutePath();
+		
 		if (solrAddress.isCloud()){
 			System.out.println("--> Found zkHost or zkRun in the command line - assuming SolrCloud");
 			if (binSolr != null) {
-				// create dir
-				File configDirHandle = new File(writer.getOutputDir() + File.separator + "configs");
-				if (configDirHandle.mkdir()) {
-					//run bin/solr zk cp -r zk:/configs THAT DIR THAT WE CREATED -z localhost:9983
-					String configLocation = "zk:/configs";
-					String configLocalLocation = configDirHandle.getAbsolutePath();
-					System.out.println("* Copying configsets from " + configLocation + " to " + configLocalLocation);
-					commandLineFetcher.fetch(binSolr
-								+ " zk cp -r " + configLocation + " " + configLocalLocation
-								+ " -z " + solrAddress.getZkAddress(),
-							"zk_cp_outerr.out");
-				} else {
-					System.out.println("Can't create config output dir " + configDirHandle.getAbsolutePath());
-				}
+				//run bin/solr zk cp -r zk:/configs THAT DIR THAT WE CREATED -z localhost:9983
+				String configLocation = "zk:/configs";
+				System.out.println("* Copying configsets from " + configLocation + " to " + configLocalLocation);
+				commandLineFetcher.fetch(binSolr
+							+ " zk cp -r " + configLocation + " " + configLocalLocation
+							+ " -z " + solrAddress.getZkAddress(),
+						"zk_cp_outerr.out");
 			} else {
 				System.out.println("Couldn't find bin/solr. Maybe -Dsolr.install.dir isn't present?");
 			}
@@ -144,17 +143,11 @@ public class DiagnosticsRunner {
 		} else {
 			System.out.println("--> No zkHost or zkRun in the command line - assuming Master/Slave");
 			
-			String configsSource = solrFetcher.getSolrHome() + File.separator + "configsets";
-			String configsDestination = outputDir + File.separator + "configsets";
-			System.out.println("* Copying configsets from " + configsSource + " to " + configsDestination);
-		    try {
-				FileUtils.copyDirectory(new File(configsSource), new File(configsDestination));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
 			System.out.println("* Getting cores status");
-			writer.write(httpFetcher.get("admin/cores?action=STATUS"), "cores.json");
+			String coreStatus = httpFetcher.get("admin/cores?action=STATUS");
+			writer.write(coreStatus, "cores.json");
+			
+			solrFetcher.getCoreConfigs(coreStatus, configLocalLocation);
 		}	
 
 		System.out.println("* Getting metrics");
@@ -164,7 +157,7 @@ public class DiagnosticsRunner {
 		System.out.println("* Packing " + outputDir + " to " + zipFile);
 		zip(outputDir, zipFile);
 	}
-	
+
 	public static SolrAddress getSolrAddress(String solrCmdLine) throws Exception {
 		SolrAddress solr = new SolrAddress();
 		Pattern pattern = Pattern.compile("\\-Djetty\\.port=(.*?) ");

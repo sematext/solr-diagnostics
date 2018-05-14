@@ -5,20 +5,25 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.noggit.JSONParser;
+import org.noggit.ObjectBuilder;
 
 import runner.OutputWriter;
 
 public class SolrStuffFetcher {
 	OutputWriter writer;
 	public String cmdLine;
+	public String solrLogsSourceDir;
 	
 	public SolrStuffFetcher(OutputWriter writer, String cmdLine){
 		this.writer = writer;
 		this.cmdLine = cmdLine;
+		
 	}
 	
 	public String getParamRegex(String regex) throws Exception {
@@ -61,8 +66,8 @@ public class SolrStuffFetcher {
 		try {
 			Files.createDirectory(solrLogsOutputDirHandle);
 		} catch (IOException e1) {
-			System.out.println("Can't create the directory" + solrLogsOutputDir);
-			return;
+			//this may be created when getting regular logs, so we'll ignore it
+			//System.out.println("Can't create the directory " + solrLogsOutputDir);
 		}
 		
 		File GCLog;
@@ -72,16 +77,24 @@ public class SolrStuffFetcher {
 			e1.printStackTrace();
 			return;
 		}
+		
 		String GCbaseName = GCLog.getName();
 		File GCLogDir = GCLog.getParentFile();
-		try {
-			System.out.println("* Copying logs from " + GCLogDir.getAbsolutePath() + " to " + solrLogsOutputDir);
-			for (Path gclog : Files.newDirectoryStream(GCLogDir.toPath(), GCbaseName + "*")) {
-				Files.copy(gclog, Paths.get(solrLogsOutputDir, gclog.getFileName().toString()));
+		
+		File LogDir = new File(solrLogsSourceDir);
+		
+		if (LogDir.getAbsolutePath().equals(GCLogDir.getAbsolutePath())) {
+			System.out.println("GC logs are in the same place as regular logs. Not copying them twice");
+		} else {
+			try {
+				System.out.println("* Copying logs from " + GCLogDir.getAbsolutePath() + " to " + solrLogsOutputDir);
+				for (Path gclog : Files.newDirectoryStream(GCLogDir.toPath(), GCbaseName + "*")) {
+					Files.copy(gclog, Paths.get(solrLogsOutputDir, gclog.getFileName().toString()));
+				}
+			} catch (IOException e) {
+				System.out.println("Can't copy GC logs from " + GCLogDir.getAbsolutePath());
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			System.out.println("Can't copy GC logs from " + GCLogDir.getAbsolutePath());
-			e.printStackTrace();
 		}
 	}
 	
@@ -94,7 +107,6 @@ public class SolrStuffFetcher {
 			System.out.println("Can't create output dir " + solrLogsOutputDir);
 		}
 		
-		String solrLogsSourceDir;
 		try {
 			solrLogsSourceDir = getParamRegex("\\-Dsolr\\.log\\.dir=(.*?) ");
 		} catch (Exception e1) {
@@ -119,5 +131,33 @@ public class SolrStuffFetcher {
 			return null;
 		}
 		return binSolr;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void getCoreConfigs(String coreStatus, String configLocalLocation) throws IOException {
+		JSONParser parser = new JSONParser(coreStatus);
+		ObjectBuilder builder = new ObjectBuilder(parser);
+		HashMap<String,Object> coreStatusHash = (HashMap<String,Object>)builder.getObject();
+		if (coreStatusHash.get("status") == null) {
+			System.out.println("No 'status' key in the CoreAdmin STATUS reply. Can't get core configs");
+		} else {
+			HashMap<String,Object> statusObject = (HashMap<String, Object>) coreStatusHash.get("status");
+			for (String core : statusObject.keySet()) {
+				HashMap<String,Object> thisCoreStatus = (HashMap<String, Object>) statusObject.get(core);
+				if (thisCoreStatus != null) {
+					String instanceDir = (String) thisCoreStatus.get("instanceDir");
+					if (instanceDir != null) {
+						String configSource = instanceDir + File.separator + "conf";
+						String configDestination = configLocalLocation + File.separator + core;
+						System.out.println("* Copying config from " + configSource + " to " + configDestination);
+						try {
+							FileUtils.copyDirectory(new File(configSource), new File(configDestination));
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
 	}
 }
