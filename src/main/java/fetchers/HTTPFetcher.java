@@ -19,18 +19,22 @@ public class HTTPFetcher {
 	
 	public String get(String endpoint) throws IOException {
 		URL url = new URL(baseURL + endpoint);
-		HttpURLConnection con = (HttpURLConnection) url.openConnection();
-		con.setRequestMethod("GET");
-		BufferedReader in = new BufferedReader(
-		  new InputStreamReader(con.getInputStream()));
-		String inputLine;
-		StringBuffer content = new StringBuffer();
-		while ((inputLine = in.readLine()) != null) {
-		    content.append(inputLine);
-			content.append(System.lineSeparator());
+		try {
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			BufferedReader in = new BufferedReader(
+			  new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer content = new StringBuffer();
+			while ((inputLine = in.readLine()) != null) {
+			    content.append(inputLine);
+				content.append(System.lineSeparator());
+			}
+			in.close();
+			con.disconnect();
+			return content.toString();
+		} catch (IOException e) {
+			return e.getMessage();
 		}
-		in.close();
-		con.disconnect();
-		return content.toString();
 	}
 }
