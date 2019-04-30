@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.sematext.solr-diagnostics</groupId>
   <artifactId>com.sematext.solr-diagnostics</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <name>solr-diagnostics</name>
   <description>Tool to get info from your Solr(Cloud) installation</description>
   <dependencies>
