@@ -22,7 +22,7 @@ Gathers info from Solr that should help diagnose issues:
 Download the binary from [releases](https://github.com/sematext/solr-diagnostics/releases). Then run it with:
 
     sudo java -jar solr-diagnostics-x.y.z.jar
-You'll need Java (7). It will work without `sudo`, but some information will be missing (e.g. all the `sysctl` info).
+You'll need Java (7 or later). It will work without `sudo`, but some information will be missing (e.g. all the `sysctl` info).
 # Build from sources
 Clone the repository, then run:
 
