@@ -6,21 +6,33 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 
 import addresses.SolrAddress;
 
 public class HTTPFetcher {
-	
+
 	String baseURL;
-	
-	public HTTPFetcher(SolrAddress solrAddress) throws MalformedURLException {
-		baseURL = "http://" + solrAddress.getHost() + ":" + solrAddress.getJettyPort() + "/solr/";
+	Boolean ssl = false;
+
+	public HTTPFetcher(SolrAddress solrAddress, Boolean ssl) throws MalformedURLException {
+		this.ssl = ssl;
+		String proto = "http";
+		if (ssl) {
+			proto = "https";
+		}
+		baseURL = proto + "://" + solrAddress.getHost() + ":" + solrAddress.getJettyPort() + "/solr/";
 	}
-	
+
 	public String get(String endpoint) throws IOException {
 		URL url = new URL(baseURL + endpoint);
 		try {
-			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			HttpURLConnection con;
+			if (ssl) {
+				con = (HttpsURLConnection) url.openConnection();
+			} else {
+				con = (HttpURLConnection) url.openConnection();
+			}
 			con.setRequestMethod("GET");
 			BufferedReader in = new BufferedReader(
 			  new InputStreamReader(con.getInputStream()));

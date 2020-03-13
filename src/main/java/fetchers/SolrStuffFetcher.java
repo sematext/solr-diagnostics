@@ -19,13 +19,13 @@ public class SolrStuffFetcher {
 	OutputWriter writer;
 	public String cmdLine;
 	public String solrLogsSourceDir;
-	
+
 	public SolrStuffFetcher(OutputWriter writer, String cmdLine){
 		this.writer = writer;
 		this.cmdLine = cmdLine;
-		
+
 	}
-	
+
 	public String getParamRegex(String regex) throws Exception {
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(cmdLine);
@@ -35,11 +35,22 @@ public class SolrStuffFetcher {
 			throw new Exception("Can't find a match for " + regex);
 		}
 	}
-	
+
 	public String getSolrHome() throws Exception {
 		return getParamRegex("\\-Dsolr\\.solr\\.home=(.*?) ");
 	}
-	
+
+	public Boolean getSolrSSL() {
+		try {
+			if (getParamRegex("\\-Dsolr\\.jetty\\.keystore=(.*?) ").length() > 0) {
+				return true;
+			}
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 	public void fetchSolrXML() {
 		String outputDir = writer.getOutputDir();
 		File solrHome;
@@ -57,11 +68,11 @@ public class SolrStuffFetcher {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void fetchGCLogs() {
 		String outputDir = writer.getOutputDir();
 		String solrLogsOutputDir = outputDir + File.separator + "logs";
-		
+
 		Path solrLogsOutputDirHandle = Paths.get(solrLogsOutputDir);
 		try {
 			Files.createDirectory(solrLogsOutputDirHandle);
@@ -69,7 +80,7 @@ public class SolrStuffFetcher {
 			//this may be created when getting regular logs, so we'll ignore it
 			//System.out.println("Can't create the directory " + solrLogsOutputDir);
 		}
-		
+
 		File GCLog;
 		try {
 			GCLog = new File(getParamRegex("\\-Xloggc:(.*?) "));
@@ -77,12 +88,12 @@ public class SolrStuffFetcher {
 			e1.printStackTrace();
 			return;
 		}
-		
+
 		String GCbaseName = GCLog.getName();
 		File GCLogDir = GCLog.getParentFile();
-		
+
 		File LogDir = new File(solrLogsSourceDir);
-		
+
 		if (LogDir.getAbsolutePath().equals(GCLogDir.getAbsolutePath())) {
 			System.out.println("GC logs are in the same place as regular logs. Not copying them twice");
 		} else {
@@ -97,16 +108,16 @@ public class SolrStuffFetcher {
 			}
 		}
 	}
-	
+
 	public void fetchLogs() {
 		String outputDir = writer.getOutputDir();
 		String solrLogsOutputDir = outputDir + File.separator + "logs";
-		
+
 		File solrLogsOutputDirHandle = new File(solrLogsOutputDir);
 		if (!solrLogsOutputDirHandle.mkdir()) {
 			System.out.println("Can't create output dir " + solrLogsOutputDir);
 		}
-		
+
 		try {
 			solrLogsSourceDir = getParamRegex("\\-Dsolr\\.log\\.dir=(.*?) ");
 		} catch (Exception e1) {
@@ -120,7 +131,7 @@ public class SolrStuffFetcher {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public String getBinSolr() {
 		String binSolr;
 		try {
@@ -132,7 +143,7 @@ public class SolrStuffFetcher {
 		}
 		return binSolr;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void getCoreConfigs(String coreStatus, String configLocalLocation) throws IOException {
 		JSONParser parser = new JSONParser(coreStatus);
