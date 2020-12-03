@@ -22,7 +22,13 @@ Gathers info from Solr that should help diagnose issues:
 Download the binary from [releases](https://github.com/sematext/solr-diagnostics/releases). Then run it with:
 
     sudo java -jar solr-diagnostics-x.y.z.jar
+
 You'll need Java (7 or later). It will work without `sudo`, but some information will be missing (e.g. all the `sysctl` info).
+
+The tool will politely say what it collects, then pack everything in a zip archive under `/tmp`. You can change this location by adding `-outputdir /some/other/path`
+
+By default, solr-diagnostics will try to get all Solr logs. You can skip this by adding `-noSolrLogs`. Similarly, you can collect everything from `/var/log` (they are not fetched by default) by adding `-getVarLog`.
+
 # Build from sources
 Clone the repository, then run:
 
