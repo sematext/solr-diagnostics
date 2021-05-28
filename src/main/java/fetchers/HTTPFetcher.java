@@ -3,8 +3,10 @@ package fetchers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.PasswordAuthentication;
 import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -15,16 +17,26 @@ public class HTTPFetcher {
 	String baseURL;
 	Boolean ssl = false;
 
-	public HTTPFetcher(SolrAddress solrAddress, Boolean ssl) throws MalformedURLException {
+	public HTTPFetcher(SolrAddress solrAddress, Boolean ssl,
+			final String user, final String pass) throws MalformedURLException {
 		this.ssl = ssl;
 		String proto = "http";
 		if (ssl) {
 			proto = "https";
 		}
 		baseURL = proto + "://" + solrAddress.getHost() + ":" + solrAddress.getJettyPort() + "/solr/";
+		
+		if (user != null) {
+			Authenticator.setDefault (new Authenticator() {
+			    protected PasswordAuthentication getPasswordAuthentication() {
+			        return new PasswordAuthentication (user, pass.toCharArray());
+			    }
+			});
+		}
 	}
 
 	public String get(String endpoint) throws IOException {
+		
 		URL url = new URL(baseURL + endpoint);
 		try {
 			HttpURLConnection con;

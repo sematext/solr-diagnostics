@@ -105,8 +105,11 @@ public class DiagnosticsRunner {
 
 		SolrAddress solrAddress = getSolrAddress(solrCmdLine);
 		String binSolr = solrFetcher.getBinSolr();
-
-		HTTPFetcher httpFetcher = new HTTPFetcher(solrAddress, solrFetcher.getSolrSSL());
+		
+		HTTPFetcher httpFetcher = new HTTPFetcher(solrAddress,
+				solrFetcher.getSolrSSL(),
+				cmd.getOptionValue("user"),
+				cmd.getOptionValue("pass"));
 
 		File configDirHandle = new File(writer.getOutputDir() + File.separator + "configs");
 		if (! configDirHandle.mkdir()) {
@@ -253,6 +256,14 @@ public class DiagnosticsRunner {
 		options.addOption("getVarLog", "Fetch all logs from /var/log (there might be a lot of data)");
 		options.addOption(Option.builder("outputdir")
                 .desc( "Where to write the diagnostics files. A timestamp-based directory will be created there. Defaults to /tmp" )
+                .hasArg(true)
+                .build());
+		options.addOption(Option.builder("user")
+                .desc( "username for basic authentication" )
+                .hasArg(true)
+                .build());
+		options.addOption(Option.builder("pass")
+                .desc( "password for basic authentication" )
                 .hasArg(true)
                 .build());
 

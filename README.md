@@ -18,6 +18,7 @@ Gathers info from Solr that should help diagnose issues:
 * (SolrCloud only) aliases
 * (SolrCloud only) overseer status
 * metrics snapshot
+
 # Usage
 Download the binary from [releases](https://github.com/sematext/solr-diagnostics/releases). Then run it with:
 
@@ -28,6 +29,8 @@ You'll need Java (7 or later). It will work without `sudo`, but some information
 The tool will politely say what it collects, then pack everything in a zip archive under `/tmp`. You can change this location by adding `-outputdir /some/other/path`
 
 By default, solr-diagnostics will try to get all Solr logs. You can skip this by adding `-noSolrLogs`. Similarly, you can collect everything from `/var/log` (they are not fetched by default) by adding `-getVarLog`.
+
+You can pass (basic) authentication credentials by adding `-user my_user` and `-pass my_pass`.
 
 # Build from sources
 Clone the repository, then run:
